@@ -267,28 +267,6 @@ function getCountryName(countryCode) {
     }
 }
 
-function addCodesAndCountries() {
-    // Получаем div для кодов и стран
-    const countriesDiv = document.querySelector('.countries');
-
-    // Создаем список ul для отображения кодов и стран
-    const ul = document.createElement('ul');
-
-    // Проходимся по объекту countries и добавляем каждый код и страну в список
-    for (const code in countries) {
-        const countryName = countries[code];
-        const li = document.createElement('li');
-        li.textContent = `${code}: ${countryName}`;
-        ul.appendChild(li);
-    }
-
-    // Добавляем список в div
-    countriesDiv.appendChild(ul);
-}
-
-// Вызываем функцию для добавления кодов и стран при загрузке страницы
-window.addEventListener('DOMContentLoaded', addCodesAndCountries);
-
 function checkAge(dateOfBirth) {
     // Создаем объект Date для текущей даты
     const currentDate = new Date();
@@ -335,8 +313,11 @@ function addUsers() {
                 </div>
 
                 <div class="form__direction">
-                    <label class="form__label" for="countryCode${userNumber}">Код страны юрисдикции резидентства:</label>
-                    <input class="form__input" type="text" id="countryCode${userNumber}" name="countryCode${userNumber}" placeholder="643" required>
+                    <label class="form__label" for="countryCode${userNumber}">Страна юрисдикции резидентства:</label>
+                    <select class="form__input" id="countryCode${userNumber}" name="countryCode${userNumber}" required>
+                        <option value="">Выберите страну</option>
+                        ${Object.entries(countries).map(([code, name]) => `<option value="${code}">${name}</option>`).join('')}
+                    </select>
                 </div>
 
                 <div class="form__direction">
@@ -346,7 +327,6 @@ function addUsers() {
                         <option value="individual">ФЛ</option>
                     </select>
                 </div>
-
 
                 <div class="form__direction">
                     <label class="form__label" for="gender${userNumber}">Пол:</label>
@@ -374,8 +354,17 @@ function addUsers() {
 
         // Добавляем блок пользователя к форме
         document.getElementById("userForm").appendChild(userBlock);
+
+        // Добавляем обработчик события change для каждого выпадающего списка страны
+        let countryCodeSelect = document.getElementById(`countryCode${userNumber}`);
+        countryCodeSelect.addEventListener('change', function() {
+            let selectedCountryCode = this.value;
+            let countryCodeInput = document.getElementById(`countryCode${userNumber}`);
+            countryCodeInput.value = selectedCountryCode;
+        });
     }
 }
+
 
 function clickForm() {
     // Создаем XML-структуру
@@ -412,42 +401,48 @@ function clickForm() {
         const tinElements = xmlDoc.getElementsByTagName("TIN");
 
         // Проходимся по каждому элементу <TIN> и обрабатываем результат проверки
-        Array.from(tinElements).forEach((tinElement, index) => {
+        Array.from(tinElements).forEach((tinElement) => {
+            let tinElements = document.querySelectorAll('input[id^="tin"]');
             // Находим соответствующие элементы на странице
-            const tinCorrectivityElement = document.getElementById(`tinCorrectivity${index}`);
-            const resultElement = document.getElementById(`result${index}`);
+            for(let i = 0; i < tinElements.length; i++) {
+                let tinCorrectivityElement = document.getElementById(`tinCorrectivity${i}`);
+                let resultElement = document.getElementById(`result${i}`);
 
+                if(resultElement.innerHTML === 'Возраст должен быть больше 18 лет'){
+                    tinCorrectivityElement.innerHTML = '';
+                    continue;
+                }
+                // Находим элемент <Проверен> для текущего TIN
+                const checkedElement = tinElement.querySelector("Проверен");
+    
+                if(checkedElement){
+                    // Получаем атрибуты результатов проверки
+                    const result = checkedElement.getAttribute("Результат");
+                    const Step1 = checkedElement.getAttribute("ШагПров1");
+                    const Step2 = checkedElement.getAttribute("ШагПров2");
+                    const Step3 = checkedElement.getAttribute("ШагПров3");
+                    const Step4 = checkedElement.getAttribute("ШагПров4");
+    
+                    // Генерируем пояснения на основе результатов проверки
+                    let resultString = "";
+                    resultString += `Проверка длины:<br> ${Step1 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
+                    resultString += `Проверка структуры:<br> ${Step2 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
+                    resultString += `Проверка по контрольному соотношению:<br> ${Step3 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
+                    resultString += `Проверка соответствия TIN и входным данным:<br> ${Step4 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}`;
+    
+                    console.log(resultString);
+    
+                    // Отображаем результаты на странице с использованием innerHTML
+                    tinCorrectivityElement.innerHTML = result === "TRUE" ? "True" : "False";
+                    tinCorrectivityElement.style.color = result === "TRUE" ? "green" : "red";
+                    resultElement.innerHTML = resultString; // Показываем пояснения в поле "Пояснение"
+    
+                } else{
+                    tinCorrectivityElement.innerHTML = "";
+                    resultElement.innerHTML = "В данной стране нет TIN";
+                }
 
-            // Находим элемент <Проверен> для текущего TIN
-            const checkedElement = tinElement.querySelector("Проверен");
-
-            if(checkedElement){
-                // Получаем атрибуты результатов проверки
-                const result = checkedElement.getAttribute("Результат");
-                const Step1 = checkedElement.getAttribute("ШагПров1");
-                const Step2 = checkedElement.getAttribute("ШагПров2");
-                const Step3 = checkedElement.getAttribute("ШагПров3");
-                const Step4 = checkedElement.getAttribute("ШагПров4");
-
-                // Генерируем пояснения на основе результатов проверки
-                let resultString = "";
-                resultString += `Проверка длины:<br> ${Step1 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
-                resultString += `Проверка структуры:<br> ${Step2 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
-                resultString += `Проверка по контрольному соотношению:<br> ${Step3 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}<br>`;
-                resultString += `Проверка соответствия TIN и входным данным:<br> ${Step4 === "1" ? "<b>Успешно</b>" : "<b>Ошибка</b>"}`;
-
-                console.log(resultString);
-
-                // Отображаем результаты на странице с использованием innerHTML
-                tinCorrectivityElement.innerHTML = result === "TRUE" ? "True" : "False";
-                tinCorrectivityElement.style.color = result === "TRUE" ? "green" : "red";
-                resultElement.innerHTML = resultString; // Показываем пояснения в поле "Пояснение"
-
-            } else{
-                tinCorrectivityElement.innerHTML = "";
-                resultElement.innerHTML = "В данной стране нет TIN";
             }
-
         });
     })
     .catch(error => {
@@ -462,7 +457,7 @@ function buildXML() {
 
     // Получаем данные пользователя из формы
     let tinElements = document.querySelectorAll('input[id^="tin"]');
-    let countryCodeElements = document.querySelectorAll('input[id^="countryCode"]');
+    let countryCodeElements = document.querySelectorAll('select[id^="countryCode"]');
     let entityTypeElements = document.querySelectorAll('select[id^="entityType"]');
     let genderElements = document.querySelectorAll('select[id^="gender"]');
     let creationDateElements = document.querySelectorAll('input[id^="creationDate"]');
@@ -480,15 +475,17 @@ function buildXML() {
         let countryNameValue = getCountryName(countryCodeValue); // Здесь нужно получить наименование страны на основе countryCode
     
         if (countryCodeValue === '' || entityTypeValue === '' || genderValue === '' || creationDateValue === '') {
-            resultElement.textContent = 'Неполные данные';
+            resultElement.innerHTML = 'Неполные данные';
             console.log('Неполные данные');
             continue; // Пропускаем текущую итерацию и переходим к следующей
         }
     
         if (!checkAge(creationDateValue)) {
-            resultElement.textContent = 'Возраст должен быть больше 18 лет';
+            resultElement.innerHTML = 'Возраст должен быть больше 18 лет';
             console.log('Возраст должен быть больше 18 лет');
             continue; // Пропускаем текущую итерацию и переходим к следующей
+        } else{
+            resultElement.innerHTML = '';
         }
     
         // Добавляем блок TIN для текущего пользователя в XML-структуру

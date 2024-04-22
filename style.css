@@ -83,9 +83,7 @@ input, select {
     margin-bottom: 20px;
     padding: 8px;
 }
-.countries{
-    margin: 20px 0;
-}
+
 /* Добавим стили для списка кодов и стран */
 .countries ul {
     list-style-type: none;
