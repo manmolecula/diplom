@@ -369,7 +369,7 @@ function addUsers() {
 function clickForm() {
     // Создаем XML-структуру
     let xmlString = buildXML();
-    let apiKey = '07E09D4E-91F7-4B56-9828-F8C55F6E35C2';
+    let apiKey = 'AF5736BF-34E9-4211-8CFB-33302DDBCABF';
 
     // Создаем Blob из XML-строки с типом MIME "text/xml"
     let blob = new Blob([xmlString], { type: 'text/xml' });
@@ -480,7 +480,7 @@ function buildXML() {
             continue; // Пропускаем текущую итерацию и переходим к следующей
         }
     
-        if (!checkAge(creationDateValue)) {
+        if (!checkAge(creationDateValue) && entityTypeValue !== 'legal') {
             resultElement.innerHTML = 'Возраст должен быть больше 18 лет';
             console.log('Возраст должен быть больше 18 лет');
             continue; // Пропускаем текущую итерацию и переходим к следующей
